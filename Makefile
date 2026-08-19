@@ -2,10 +2,13 @@ DOCKER ?= docker
 IMAGE ?= pasteboard
 TAG ?= latest
 
-.PHONY: build run push
+.PHONY: build rebuild run push
 
 build:
 	$(DOCKER) build -f Dockerfile.arm64 -t $(IMAGE):$(TAG) .
+
+rebuild:
+	$(DOCKER) build --no-cache -f Dockerfile.arm64 -t $(IMAGE):$(TAG) .
 
 run: build
 	@printf 'Pasteboard is available at http://localhost:3000\n'
