@@ -4,17 +4,22 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 
-RUN apt-get update \
+# The base slim image strips man pages via dpkg path-exclude. Removing that
+# exclusion lets update-alternatives register ImageMagick's man pages without
+# warning; they are dropped again afterwards to keep the image slim.
+RUN sed -i '/path-exclude \/usr\/share\/man/d' /etc/dpkg/dpkg.cfg.d/docker \
+    && apt-get update \
     && apt-get install -y --no-install-recommends imagemagick ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/share/man
 
 COPY package.json package-lock.json ./
 COPY . ./
 
-RUN npm install --unsafe-perm=true --include=dev \
+RUN npm install --include=dev \
     && npm run build \
-    && npm prune --production \
-    && npm cache clean --force
+    && npm prune --omit=dev \
+    && rm -rf /root/.npm
 
 RUN mkdir -p /app/public/storage \
     && chown -R node:node /app
