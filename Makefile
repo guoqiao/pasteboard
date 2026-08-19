@@ -5,7 +5,7 @@ TAG ?= latest
 .PHONY: build run push
 
 build:
-	$(DOCKER) build -f Dockerfile.arm -t $(IMAGE):$(TAG) .
+	$(DOCKER) build -f Dockerfile.arm64 -t $(IMAGE):$(TAG) .
 
 run: build
 	@printf 'Pasteboard is available at http://localhost:3000\n'
