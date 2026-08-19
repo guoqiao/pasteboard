@@ -18,7 +18,7 @@ exports.init = (expressApp, webServer) ->
 
   webSocketServer.on "request", (req) ->
     ID = generateID()
-    if originIsAllowed req.origin
+    if originIsAllowed req.origin, req
       connection = req.accept null, req.origin
 
       # Send the ID to the client
@@ -45,5 +45,12 @@ generateID = ->
           v = (if c is "x" then r else (r & 0x3 | 0x8))
           return v.toString 16
 
-originIsAllowed = (origin) ->
-  app.get("localrun") or origin is app.get "domain"
+originIsAllowed = (origin, req) ->
+  return true if app.get "localrun"
+  return false unless origin
+  return true if origin is app.get "domain"
+
+  headers = req.httpRequest.headers
+  requestHost = (headers["x-forwarded-host"] or headers.host).split(",")[0].trim()
+  originHost = origin.split("://")[1].split("/")[0]
+  originHost is requestHost
