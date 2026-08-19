@@ -1,0 +1,32 @@
+FROM amd64/node:24-bookworm-slim
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+# The base slim image strips man pages via dpkg path-exclude. Removing that
+# exclusion lets update-alternatives register ImageMagick's man pages without
+# warning; they are dropped again afterwards to keep the image slim.
+RUN sed -i '/path-exclude \/usr\/share\/man/d' /etc/dpkg/dpkg.cfg.d/docker \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends imagemagick ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/share/man
+
+COPY package.json package-lock.json ./
+COPY . ./
+
+RUN npm install --include=dev \
+    && npm run build \
+    && npm prune --omit=dev \
+    && rm -rf /root/.npm
+
+RUN mkdir -p /app/public/storage \
+    && chown -R node:node /app
+
+USER node
+
+EXPOSE 3000
+VOLUME ["/app/public/storage"]
+
+CMD ["npm", "start"]

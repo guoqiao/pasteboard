@@ -24,7 +24,7 @@ For a native development setup, install:
 - Node.js 24 and npm.
 - ImageMagick, required by the server-side crop fallback. On Debian/Ubuntu, install it with `sudo apt-get install imagemagick`.
 
-The included Dockerfile targets ARM64 hosts and already includes ImageMagick. A modern browser with WebSocket, File API, and canvas support is required for the full upload experience.
+The included Dockerfiles target ARM64 (`Dockerfile.arm64`) and AMD64 (`Dockerfile.amd64`) hosts and already include ImageMagick. A modern browser with WebSocket, File API, and canvas support is required for the full upload experience.
 
 ## Run Locally
 
@@ -74,9 +74,16 @@ cp auth/cloudflare.example.js auth/cloudflare.js
 
 Do not commit populated auth files or credentials. In Docker, mount configured auth files into `/app/auth`; the image build context excludes them.
 
-## Docker on ARM64
+## Docker
 
-`Dockerfile.arm64` uses an ARM64 Node.js 24 image, installs ImageMagick, builds the application, and runs it as the unprivileged `node` user. On an ARM64 Docker host:
+`Dockerfile.arm64` and `Dockerfile.amd64` use the matching Node.js 24 base image, install ImageMagick, build the application, and run it as the unprivileged `node` user. Choose the file that matches your host architecture and build it with:
+
+```sh
+docker build -f Dockerfile.arm64 -t pasteboard:latest .   # ARM64 host
+docker build -f Dockerfile.amd64 -t pasteboard:latest .   # AMD64 host
+```
+
+On an ARM64 host the Makefile already targets `Dockerfile.arm64`, so `make run` just works:
 
 ```sh
 make run
