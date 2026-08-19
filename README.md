@@ -30,3 +30,35 @@ sudo apt-get install imagemagick
 ```
 __Step 3 (Optional):__ Edit the example files in the _/auth_ folder with your credentials and rename them according to
 the instructions inside the files. You can still run the app without doing this, but certain functions will be missing.
+
+## Running with Docker on ARM64
+
+The ARM64 image includes ImageMagick and persists local uploads in `public/storage`.
+Install Docker on an ARM64 host, then build and run Pasteboard with:
+
+```
+make run
+```
+
+The app is available at <http://localhost:3000>. To publish the locally built image to Docker Hub, log in first and run:
+
+```
+./docker_tag_and_push.sh [TAG]
+```
+
+The default tag is `latest`; for example, `./docker_tag_and_push.sh v0.0.0` pushes `guoqiao/pasteboard:v0.0.0`.
+
+The image is intentionally built from `Dockerfile.arm` with an ARM64 Node 22 base image. To use a different local image or tag when building, pass `IMAGE` and `TAG`, for example:
+
+```
+make build IMAGE=pasteboard TAG=v0.0.0
+```
+
+To publish that non-default tag, the push script currently expects the default local image name `pasteboard:latest`; tag it first if needed:
+
+```
+docker tag pasteboard:v0.0.0 pasteboard:latest
+./docker_tag_and_push.sh v0.0.0
+```
+
+The Docker build context excludes local authentication files. Configure credentials by mounting the relevant files into `/app/auth` when running the container if needed.

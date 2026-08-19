@@ -4,13 +4,17 @@
 
 request = require "request"
 auth = require "../auth"
+lastTimestamp = 0
 
 # Generates a unique file name with the given file type.
 # This current method generates names that are guaranteed
 # to be unique for 115 days (10^13 microseconds).
 exports.generateFileName = (type) ->
   fileExt = "." + (if type is "jpeg" then "jpg" else type.replace "image/", "")
-  timeString = "" + require("microtime").now()
+  timestamp = Date.now() * 1000 + Math.floor(process.hrtime()[1] / 1000)
+  timestamp = Math.max timestamp, lastTimestamp + 1
+  lastTimestamp = timestamp
+  timeString = "" + timestamp
   timeString = timeString.substr timeString.length - 13 # 13 last digits
   return "#{base62Encode parseInt(timeString, 10)}#{fileExt}"
 

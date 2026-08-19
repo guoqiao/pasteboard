@@ -13,7 +13,7 @@ exports.init = (app, express) ->
     app.use express.cookieParser()
     app.use express.methodOverride()
     app.use app.router
-    app.use require("connect-assets")()
+    app.use require("connect-assets") build: false
     app.use express.static("#{__dirname}/../public")
 
     # Set
