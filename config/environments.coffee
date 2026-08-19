@@ -12,6 +12,16 @@ exports.init = (app, express) ->
     app.use express.logger("dev") if process.env.LOCAL
     app.use express.cookieParser()
     app.use express.methodOverride()
+
+    # Express 3 reads the removed response._headers property on modern Node.
+    app.use (req, res, next) ->
+      unless "_headers" of res
+        Object.defineProperty res, "_headers",
+          configurable: true
+          enumerable: false
+          get: -> res.getHeaders()
+      next()
+
     app.use app.router
     app.use require("connect-assets") build: false
     app.use express.static("#{__dirname}/../public")

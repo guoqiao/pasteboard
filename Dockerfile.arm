@@ -1,4 +1,4 @@
-FROM arm64v8/node:22-bookworm-slim
+FROM arm64v8/node:24-bookworm-slim
 
 ENV NODE_ENV=production
 

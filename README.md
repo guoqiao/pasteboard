@@ -48,7 +48,7 @@ The app is available at <http://localhost:3000>. To publish the locally built im
 
 The default tag is `latest`; for example, `./docker_tag_and_push.sh v0.0.0` pushes `guoqiao/pasteboard:v0.0.0`.
 
-The image is intentionally built from `Dockerfile.arm` with an ARM64 Node 22 base image. To use a different local image or tag when building, pass `IMAGE` and `TAG`, for example:
+The image is intentionally built from `Dockerfile.arm` with an ARM64 Node 24 base image. To use a different local image or tag when building, pass `IMAGE` and `TAG`, for example:
 
 ```
 make build IMAGE=pasteboard TAG=v0.0.0
