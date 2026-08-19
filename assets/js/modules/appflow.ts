@@ -42,6 +42,7 @@ const appFlow = (pasteboard: any) => {
         });
 
         setState(state + 1);
+        break;
 
       // State 2: Waiting for user to insert an image
       case states.insertingImage:
@@ -105,6 +106,7 @@ const appFlow = (pasteboard: any) => {
         $modalWindow!.on("cancel", () => {
           pasteboard.modalWindow.hide();
         });
+        break;
 
       // State 3: The user is using the webcam to take a picture
       case states.takingPhoto:
@@ -141,6 +143,7 @@ const appFlow = (pasteboard: any) => {
             setState(states.insertingImage);
           });
         });
+        break;
 
       // State 4: User is looking at / editing the image
       case states.editingImage:
@@ -189,6 +192,7 @@ const appFlow = (pasteboard: any) => {
             setState(state + 1, { upload });
           });
         });
+        break;
 
       // State 5: The image is uploading
       case states.uploadingImage:
@@ -303,6 +307,7 @@ const appFlow = (pasteboard: any) => {
           pasteboard.modalWindow.hide();
           setState(states.editingImage, { backtracked: true });
         });
+        break;
 
       // State 6: The image link is being generated
       case states.generatingLink:
