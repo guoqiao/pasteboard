@@ -1,16 +1,15 @@
 builtAssets/
+dist/
 node_modules/
 
 auth/*
-!auth/index.js
 !auth/*.example.js
 
 public/storage/*
 !public/storage/.gitinclude
+public/builtAssets/
 
 .DS_Store
 
 deploy_master
 deploy_dev
-
-deploy.coffee

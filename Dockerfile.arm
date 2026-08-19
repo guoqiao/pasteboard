@@ -9,7 +9,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package.json ./
-RUN npm install --production --unsafe-perm=true \
+RUN npm install --unsafe-perm=true \
+    && npm run build \
     && npm cache clean --force
 
 COPY . ./

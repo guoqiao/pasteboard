@@ -11,8 +11,8 @@
     <meta name="twitter:description" content="Super simple and lightning fast image sharing. Upload clipboard images with Copy &amp; Paste and image files with Drag &amp; Drop">
     <meta name="twitter:image" content="<%= imageURL %>">
 
-    <%- css("image") %>
-    <%- js("head") %>
+    <link rel="stylesheet" href="/builtAssets/image.css">
+    <script src="/builtAssets/head.js"></script>
     <% if (useAnalytics) { %>
       <!-- Google Analytics -->
       <script type="text/javascript">
@@ -62,6 +62,6 @@
       <h1 class="title"><a href="/">Pasteboard</a></h1>
       <span class="author">By <a href="https://twitter.com/JoelBesada" target="__blank" data-track="Twitter">@JoelBesada</a></span>
     </footer>
-    <%- js("image") %>
+    <script src="/builtAssets/image.js"></script>
   </body>
 </html>

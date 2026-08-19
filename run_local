@@ -1,2 +1,2 @@
 #!/bin/bash
-LOCAL=true coffee app.coffee
+npm run run-local
