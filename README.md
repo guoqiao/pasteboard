@@ -1,73 +1,145 @@
 # Pasteboard
-Pasteboard is my redesigned and renamed update to PasteShack, a web app for easy image uploading. The live version is available at [http://pasteboard.co](http://pasteboard.co), and a development version that's running the code from the dev branch is up at [http://dev.pasteboard.co](http://dev.pasteboard.co).
 
-Chrome extension repo: [https://github.com/JoelBesada/pasteboard-extension](https://github.com/JoelBesada/pasteboard-extension)
+Pasteboard is a small web app for uploading and sharing images. Users can paste an image from the clipboard, drag and drop a file, import an image URL, or take a picture with a webcam. An upload gets a short URL and an embeddable raw-image URL.
 
-MIT Licensed (http://www.opensource.org/licenses/mit-license.php)
-Copyright 2012, Joel Besada
+This repository is a substantially changed fork of [the original Pasteboard project](https://github.com/JoelBesada/pasteboard). The original application was written in CoffeeScript and had fallen out of maintenance. This fork rewrites the server and browser code in TypeScript, removes the old CoffeeScript build pipeline, modernizes dependencies, and runs on Node.js 24. The UI and core upload workflow intentionally retain much of the original Pasteboard behavior.
 
-## Why this is open source
-While future plans for Pasteboard might prevent me from keeping it open source, I've decided to share
-the code for now for people to learn from. I'm also hoping that there are developers out there
-who would like to contribute to the project by helping out with fixing bugs and adding / discussing new features.
+The project is MIT licensed. The original copyright attribution is retained in the source history.
 
-I've provided instructions on how to set up your own copy of the app, but this is mainly to allow people
-to fiddle around with the code and test it locally. Please don't publically host a copy of the app in an effort
-to drive traffic to your site instead of mine for the exact same functionality. In other words, don't be a jerk.
+## Features
 
-## Running Locally
-Here are the instructions for running the app for local testing:
+- Clipboard paste, drag-and-drop, external image URLs, and webcam capture.
+- Client-side image preview and cropping.
+- Upload progress and recent uploads stored in a browser cookie.
+- Local filesystem storage by default, with optional Amazon S3 storage.
+- Share pages with raw image URLs, downloads, and owner-only deletion.
+- WebSockets used to clean up temporary uploads when a browser leaves the page.
 
-__Step 1:__ Install [Node](http://nodejs.org/) and [Node Package Manager](https://npmjs.org/).  
-__Step 2:__ Run the following commands in the terminal  
-```
-git clone https://github.com/JoelBesada/pasteboard.git
+Uploads are limited to 10 MB. There is no database; local images live in `public/storage` and ownership is tracked with cookies when the optional hashing module is configured.
+
+## Requirements
+
+For a native development setup, install:
+
+- Node.js 24 and npm.
+- ImageMagick, required by the server-side crop fallback. On Debian/Ubuntu, install it with `sudo apt-get install imagemagick`.
+
+The included Dockerfile targets ARM64 hosts and already includes ImageMagick. A modern browser with WebSocket, File API, and canvas support is required for the full upload experience.
+
+## Run Locally
+
+```sh
+git clone https://github.com/guoqiao/pasteboard.git
 cd pasteboard
-git checkout dev
-npm install
+npm ci
 sudo apt-get install imagemagick
-./run_local
+npm run run-local
 ```
-__Step 3 (Optional):__ Edit the example files in the _/auth_ folder with your credentials and rename them according to
-the instructions inside the files. You can still run the app without doing this, but certain functions will be missing.
 
-### Configuration
+Open <http://localhost:4000>. The local runner builds the server and browser assets, then starts the app with `LOCAL=true`. Set `PORT` to use another port:
 
-The following environment variables are supported:
-
-- `PORT` — HTTP port (default `3000`, `4000` in development).
-- `DOMAIN` — canonical host used for image/share page URLs, e.g. `https://pb.guoqiao.me`.
-- `IMAGE_BASE_URL` — base URL the raw uploaded images are served from, e.g. `https://image.guoqiao.me/`.
-  When unset, image URLs are derived from the incoming request (https when served behind a TLS proxy).
-
-## Running with Docker on ARM64
-
-The ARM64 image includes ImageMagick and persists local uploads in `public/storage`.
-Install Docker on an ARM64 host, then build and run Pasteboard with:
-
+```sh
+PORT=3000 npm run run-local
 ```
+
+`./run_local` is a shorthand for the same command. `npm start` starts the already-built application; use `NODE_ENV=production npm start` for the production-like port and defaults, and run `npm run build` first when using it directly.
+
+## Configuration
+
+The application reads these environment variables at startup:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `4000` in development, otherwise `3000` | HTTP and WebSocket port. |
+| `DOMAIN` | `http://dev.pasteboard.co` in development, otherwise `http://pasteboard.co` | Canonical origin used in share-page URLs. Set this to the public HTTPS URL in a deployment. |
+| `IMAGE_BASE_URL` | Request origin plus `/storage/` for local storage | Public base URL for raw local images. When set, the image filename is appended directly to this value. |
+| `LOCAL` | unset | Enables local mode, including request-based local URLs and development request logging. `npm run run-local` sets it automatically. |
+| `NODE_ENV` | Express development default | Set `NODE_ENV=production` for a production-like process. |
+
+When running behind a reverse proxy, forward the original `Host` and `X-Forwarded-Proto` headers and proxy WebSocket upgrades. This keeps generated HTTPS URLs and same-origin WebSocket checks correct.
+
+### Optional credentials
+
+Credential files are deliberately ignored by Git. Copy only the files you need and rename them as shown below:
+
+```sh
+cp auth/amazon.example.js auth/amazon.js
+cp auth/hashing.example.js auth/hashing.js
+cp auth/cloudflare.example.js auth/cloudflare.js
+```
+
+- `auth/amazon.js` enables S3 storage. Set `S3_KEY`, `S3_SECRET`, `S3_BUCKET`, `S3_IMAGE_FOLDER`, and optionally `CDN_URL`.
+- `auth/hashing.js` should export `keyHash(image)`. It enables the cookie check that lets an uploader delete their own image. Without it, deletion is disabled.
+- `auth/cloudflare.js` enables cache purging after deletion and requires `EMAIL`, `KEY`, and `ZONE_ID`. It is only useful when Cloudflare fronts the image URLs.
+
+Do not commit populated auth files or credentials. In Docker, mount configured auth files into `/app/auth`; the image build context excludes them.
+
+## Docker on ARM64
+
+`Dockerfile.arm64` uses an ARM64 Node.js 24 image, installs ImageMagick, builds the application, and runs it as the unprivileged `node` user. On an ARM64 Docker host:
+
+```sh
 make run
 ```
 
-The app is available at <http://localhost:3000>. To publish the locally built image to Docker Hub, log in first and run:
+The app is available at <http://localhost:3000>. Local uploads are persisted through `public/storage`.
 
+The publish script targets the Docker Hub repository [`guoqiao/pasteboard`](https://hub.docker.com/r/guoqiao/pasteboard). Log in to Docker Hub before publishing:
+
+```sh
+docker login
+./docker_tag_and_push.sh v0.0.0
 ```
-./docker_tag_and_push.sh [TAG]
-```
 
-The default tag is `latest`; for example, `./docker_tag_and_push.sh v0.0.0` pushes `guoqiao/pasteboard:v0.0.0`.
+The script expects the local source image `pasteboard:latest`. Build it with `make build`, or tag a versioned local image first:
 
-The image is intentionally built from `Dockerfile.arm64` with an ARM64 Node 24 base image. To use a different local image or tag when building, pass `IMAGE` and `TAG`, for example:
-
-```
+```sh
 make build IMAGE=pasteboard TAG=v0.0.0
-```
-
-To publish that non-default tag, the push script currently expects the default local image name `pasteboard:latest`; tag it first if needed:
-
-```
 docker tag pasteboard:v0.0.0 pasteboard:latest
 ./docker_tag_and_push.sh v0.0.0
 ```
 
-The Docker build context excludes local authentication files. Configure credentials by mounting the relevant files into `/app/auth` when running the container if needed.
+Useful Make targets:
+
+```sh
+make build                         # Build pasteboard:latest
+make rebuild                       # Build without Docker cache
+make build IMAGE=pasteboard TAG=v0.0.0
+make push                          # Push pasteboard:latest as guoqiao/pasteboard:latest
+```
+
+To provide optional credentials at runtime, mount the auth directory read-only, for example:
+
+```sh
+docker run --rm -p 3000:3000 \
+  -v "$PWD/public/storage:/app/public/storage" \
+  -v "$PWD/auth:/app/auth:ro" \
+  pasteboard:latest
+```
+
+## Development
+
+The important directories are:
+
+```text
+src/                TypeScript server, controllers, configuration, and helpers
+assets/js/          TypeScript browser modules and bundled vendor scripts
+assets/css/         LESS source files
+views/              EJS page templates
+public/             Static files and local upload storage
+auth/               Optional, ignored runtime credential modules
+```
+
+Build everything with:
+
+```sh
+npm run build
+```
+
+This compiles server code to `dist/`, compiles browser TypeScript to `builtAssets/js/`, bundles browser assets, and writes CSS/JavaScript bundles to `public/builtAssets/`. These generated directories are ignored; edit `src/`, `assets/`, and `views/` instead.
+
+There is currently no automated test suite or test script. Treat `npm run build` as the minimum verification, and manually exercise upload, crop, share, download, and delete flows for changes that affect them.
+
+## Related Project
+
+The legacy Chrome extension is maintained in [JoelBesada/pasteboard-extension](https://github.com/JoelBesada/pasteboard-extension). The extension is separate from this repository.
