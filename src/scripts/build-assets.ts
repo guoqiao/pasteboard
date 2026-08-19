@@ -53,7 +53,6 @@ function buildJavaScriptBundles(): void {
   const moduleOrder = [
     "common",
     "modules/moduleloader",
-    "modules/analytics",
     "modules/appflow",
     "modules/copyandpaste",
     "modules/draganddrop",
@@ -78,7 +77,6 @@ function buildJavaScriptBundles(): void {
   const imageModuleOrder = [
     "common",
     "modules/moduleloader",
-    "modules/analytics",
     "modules/template",
     "modules/modalwindow",
   ];

@@ -13,20 +13,6 @@
 
     <link rel="stylesheet" href="/builtAssets/image.css">
     <script src="/builtAssets/head.js"></script>
-    <% if (useAnalytics) { %>
-      <!-- Google Analytics -->
-      <script type="text/javascript">
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', '<%= trackingCode %>']);
-        _gaq.push(['_trackPageview']);
-
-        (function() {
-          var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-          ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-          var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
-      </script>
-    <% } %>
   </head>
   <body data-page="Image Page">
     <canvas class="shadow"></canvas>
@@ -53,9 +39,6 @@
       <button class="cancel delete" data-track="Delete" data-image="<%= imageName %>">Delete image</button>
       <% } %>
       <a href="/" class="button confirm" data-track="Home">Upload an image</a>
-      <div class="views">
-        <span class="text">Views</span><span class="num"></span>
-      </div>
 
     </aside>
     <footer>

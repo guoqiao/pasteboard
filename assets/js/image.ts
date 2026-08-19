@@ -160,15 +160,7 @@ const toggleFullscreen = () => {
   setPosition();
 };
 
-const getViews = () => {
-  if (!window.location.pathname) return;
-  $.getJSON(`analytics/views/${location.pathname.replace("/", "")}`, (response: any) => {
-    $(".views").addClass("appear").find(".num").text(response.views || 1);
-  });
-};
-
 const pasteboard: Pasteboard = {};
-window.moduleLoader.load("analytics", pasteboard);
 window.moduleLoader.load("template", pasteboard);
 window.moduleLoader.load("modalWindow", pasteboard);
 
@@ -182,12 +174,9 @@ $(() => {
     loadImage();
   }
 
-  getViews();
-
   $image.on("load", imageLoaded);
   $image.on("error", () => $("body").addClass("broken"));
 
-  pasteboard.analytics.init();
   pasteboard.modalWindow.init();
   $modalWindow = $(pasteboard.modalWindow);
 

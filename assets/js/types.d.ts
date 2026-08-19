@@ -10,9 +10,6 @@ declare function log(...args: any[]): void;
 // Provided by lib/canvas-to-blob.min.js
 declare function dataURLtoBlob(data: string): Blob;
 
-// Google Analytics
-declare var _gaq: any[];
-
 // Spin.js
 declare class Spinner {
   constructor(options: any);
@@ -38,7 +35,6 @@ interface Window {
   SOCKET_PORT: number;
   dataURLtoBlob: (data: string) => Blob;
   webkitURL?: { createObjectURL(object: any): string };
-  _gaq?: any[];
 }
 
 // The shared parent object that modules are loaded onto.

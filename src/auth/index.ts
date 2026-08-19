@@ -8,7 +8,7 @@
 import * as path from "path";
 import { AUTH_DIR } from "../root";
 
-const authFiles = ["amazon", "google_analytics", "hashing", "cloudflare"];
+const authFiles = ["amazon", "hashing", "cloudflare"];
 
 const auth: any = {};
 

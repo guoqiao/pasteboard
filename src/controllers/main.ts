@@ -5,7 +5,6 @@ import * as fs from "fs-extra";
 import async = require("async");
 import express = require("express");
 import formidable = require("formidable");
-import auth = require("../auth");
 import helpers = require("../helpers/common");
 import { pipeRemote } from "../helpers/http";
 import uaParser = require("ua-parser");
@@ -20,20 +19,9 @@ get.index = (req: express.Request, res: express.Response) => {
   const viewData: any = {
     port: req.app.get("port"),
     redirected: false,
-    useAnalytics: false,
-    trackingCode: "",
     browser: uaParser.parseUA(req.headers["user-agent"]).family,
     uploads: [],
   };
-
-  // Use Google Analytics when not running locally
-  if (!req.app.get("localrun") && auth.google_analytics) {
-    viewData.useAnalytics = true;
-    viewData.trackingCode =
-      req.app.settings.env === "development"
-        ? auth.google_analytics.development
-        : auth.google_analytics.production;
-  }
 
   // Check cookies for recent uploads
   for (const name of Object.keys(req.cookies || {})) {

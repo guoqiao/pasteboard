@@ -16,19 +16,8 @@ export const index = get.index = (req: express.Request, res: express.Response) =
     imageName: req.params.image,
     imageURL: helpers.imageURL(req, req.params.image),
     longURL: `${req.app.get("domain")}/${req.params.image}`,
-    useAnalytics: false,
-    trackingCode: "",
     isImageOwner: helpers.isImageOwner(req, req.params.image),
   };
-
-  // Use Google Analytics when not running locally
-  if (!req.app.get("localrun") && auth.google_analytics) {
-    viewData.useAnalytics = true;
-    viewData.trackingCode =
-      req.app.settings.env === "development"
-        ? auth.google_analytics.development
-        : auth.google_analytics.production;
-  }
 
   res.render("image", viewData);
 };

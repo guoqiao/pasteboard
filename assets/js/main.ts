@@ -57,7 +57,6 @@ const displayRedirectWelcome = () => {
 };
 
 $(() => {
-  pasteboard.analytics.init();
   pasteboard.appFlow.start();
 
   loadAbout();
