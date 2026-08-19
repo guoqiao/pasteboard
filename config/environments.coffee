@@ -29,7 +29,7 @@ exports.init = (app, express) ->
     # Set
     app.set "localrun", process.env.LOCAL or false
     app.set "port", process.env.PORT or 3000
-    app.set "domain", "http://pasteboard.co"
+    app.set "domain", process.env.DOMAIN or "http://pasteboard.co"
 
     # Amazon S3 connection settings (using knox)
     if auth.amazon
