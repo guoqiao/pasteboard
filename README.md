@@ -2,6 +2,10 @@
 
 Pasteboard is a small web app for uploading and sharing images. Users can paste an image from the clipboard, drag and drop a file, import an image URL, or take a picture with a webcam. An upload gets a short URL and an embeddable raw-image URL.
 
+<p align="center">
+  <img src="public/images/pasteboard.png" alt="Pasteboard preview" width="700">
+</p>
+
 This repository is a substantially changed fork of [the original Pasteboard project](https://github.com/JoelBesada/pasteboard). The original application was written in CoffeeScript and had fallen out of maintenance. This fork rewrites the server and browser code in TypeScript, removes the old CoffeeScript build pipeline, modernizes dependencies, and runs on Node.js 24. The UI and core upload workflow intentionally retain much of the original Pasteboard behavior.
 
 The project is MIT licensed. The original copyright attribution is retained in the source history.
