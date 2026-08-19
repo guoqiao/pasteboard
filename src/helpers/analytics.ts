@@ -4,9 +4,8 @@
  */
 import * as fs from "fs";
 import * as crypto from "crypto";
-import _ = require("underscore");
-import request = require("request");
 import auth = require("../auth");
+import { jsonFetch } from "./http";
 
 const SIGNATURE_ENCODE_METHOD = "base64";
 
@@ -38,13 +37,15 @@ const readPrivateKey = (): string => {
 
 const authorize = (callback: (err?: Error | null, token?: string) => void): void => {
   if (!auth.google_analytics) {
-    return _.defer(callback, new Error("Missing Google Analytics Credentials"));
+    setImmediate(() => callback(new Error("Missing Google Analytics Credentials")));
+    return;
   }
 
   const now = parseInt(Date.now() / 1000 + "", 10);
 
   if (token && token.expires > now) {
-    return _.defer(callback, null, token.value);
+    setImmediate(() => callback(null, token.value));
+    return;
   }
 
   const signatureKey = readPrivateKey();
@@ -59,66 +60,55 @@ const authorize = (callback: (err?: Error | null, token?: string) => void): void
   const signature = cipher.sign(signatureKey, SIGNATURE_ENCODE_METHOD);
   const jwt = signatureInput + "." + urlEscape(signature);
 
-  request(
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      uri: "https://accounts.google.com/o/oauth2/token",
-      body:
-        "grant_type=" +
-        encodeURIComponent("urn:ietf:params:oauth:grant-type:jwt-bearer") +
-        "&assertion=" +
-        jwt,
+  jsonFetch("https://accounts.google.com/o/oauth2/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    (error, response, body) => {
-      if (error) {
-        callback(new Error(error));
+    body:
+      "grant_type=" +
+      encodeURIComponent("urn:ietf:params:oauth:grant-type:jwt-bearer") +
+      "&assertion=" +
+      jwt,
+  })
+    .then((result) => {
+      if (result && result.error) {
+        callback(new Error(result.error));
       } else {
-        const result = JSON.parse(body);
-        if (result.error) {
-          callback(new Error(result.error));
-        } else {
-          token = {
-            value: result.access_token,
-            expires: now + result.expires_in,
-          };
-          callback(null, token.value);
-        }
+        token = {
+          value: result.access_token,
+          expires: now + result.expires_in,
+        };
+        callback(null, token.value);
       }
-    }
-  );
+    })
+    .catch((error) => {
+      callback(new Error(error && error.message ? error.message : String(error)));
+    });
 };
 
 // Fetch the total number of unique page views for the given path
 export function getTotalViews(path: string, callback: (err?: Error | null, views?: number) => void): void {
-  authorize((err, token) => {
+  authorize((err, accessToken) => {
     if (err) return console.log(err);
 
-    request(
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        qs: {
-          ids: auth.google_analytics.PROFILE_ID,
-          "start-date": "2005-01-01",
-          "end-date": "9999-12-31",
-          dimensions: "ga:pagePath",
-          metrics: "ga:uniquePageviews",
-          filters: `ga:pagePath==${path}`,
-        },
-        uri: API_URL,
+    jsonFetch(API_URL, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
-      (err, res, body) => {
-        if (err) return callback(err);
-        const data = JSON.parse(body);
-        if (data.error) return callback(data.error);
-
-        callback(null, data.rows && data.rows[0] ? data.rows[0][1] : undefined);
-      }
-    );
+      qs: {
+        ids: auth.google_analytics.PROFILE_ID,
+        "start-date": "2005-01-01",
+        "end-date": "9999-12-31",
+        dimensions: "ga:pagePath",
+        metrics: "ga:uniquePageviews",
+        filters: `ga:pagePath==${path}`,
+      },
+    })
+      .then((data) => {
+        if (data && data.error) return callback(new Error(data.error));
+        callback(null, data && data.rows && data.rows[0] ? data.rows[0][1] : undefined);
+      })
+      .catch((err) => callback(err));
   });
 }

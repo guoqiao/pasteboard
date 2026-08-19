@@ -1,13 +1,13 @@
 /**
  * Main (Index) Controller
  */
-import * as fs from "fs.extra";
+import * as fs from "fs-extra";
 import async = require("async");
 import express = require("express");
 import formidable = require("formidable");
-import request = require("request");
 import auth = require("../auth");
 import helpers = require("../helpers/common");
+import { pipeRemote } from "../helpers/http";
 import uaParser = require("ua-parser");
 
 const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10 MB
@@ -65,9 +65,9 @@ get.redirected = (req: express.Request, res: express.Response) => {
 // cross origin restrictions
 get.imageProxy = (req: express.Request, res: express.Response) => {
   try {
-    request(decodeURIComponent(req.params.image)).pipe(res);
+    pipeRemote(decodeURIComponent(req.params.image), res);
   } catch (e) {
-    res.send("Failure", 500);
+    res.status(500).send("Failure");
   }
 };
 
@@ -83,7 +83,7 @@ post.preupload = (req: express.Request, res: express.Response) => {
   form.on("aborted", () => {
     // Remove temporary files that were in the process of uploading
     for (const file of incomingFiles) {
-      fs.unlink(file.path, () => undefined);
+      fs.unlink(file.filepath, () => undefined);
     }
   });
 
@@ -91,7 +91,7 @@ post.preupload = (req: express.Request, res: express.Response) => {
     const client = req.app.get("clients")[fields.id];
     if (client) {
       // Remove the old file
-      if (client.file) fs.unlink(client.file.path, () => undefined);
+      if (client.file) fs.unlink(client.file.filepath, () => undefined);
       client.file = files.file;
     }
 
@@ -115,27 +115,27 @@ post.upload = (req: express.Request, res: express.Response) => {
     let file: formidable.File | undefined;
     if (files.file) {
       file = files.file;
-    } else if (client && client.file && !client.uploading[client.file.path]) {
+    } else if (client && client.file && !client.uploading[client.file.filepath]) {
       file = client.file;
-      client.uploading[file!.path] = true;
+      client.uploading[file!.filepath] = true;
     }
 
     if (!file) {
       console.log("Missing file");
-      return res.send("Missing file", 500);
+      return res.status(500).send("Missing file");
     }
 
     if (file.size > FILE_SIZE_LIMIT) {
       console.log("File too large");
-      return res.send("File too large", 500);
+      return res.status(500).send("File too large");
     }
 
-    const fileName = helpers.generateFileName(file.type.replace("image/", ""));
+    const fileName = helpers.generateFileName(file.mimetype.replace("image/", ""));
     const domain = req.app.get("localrun")
       ? `${helpers.requestProtocol(req)}://${req.headers.host}`
       : req.app.get("domain");
     const longURL = `${domain}/${fileName}`;
-    let sourcePath = file.path;
+    let sourcePath = file.filepath;
 
     const parallels: any = {};
     if (knox) {
@@ -145,7 +145,7 @@ post.upload = (req: express.Request, res: express.Response) => {
           sourcePath,
           `${req.app.get("amazonFilePath")}${fileName}`,
           {
-            "Content-Type": file!.type,
+            "Content-Type": file!.mimetype,
             "x-amz-acl": "private",
           },
           callback
@@ -186,7 +186,7 @@ post.upload = (req: express.Request, res: express.Response) => {
       async.parallel(parallels, (err) => {
         if (err) {
           console.log(err);
-          return res.send("Failed to upload file", 500);
+          return res.status(500).send("Failed to upload file");
         }
 
         fs.unlink(sourcePath, () => undefined);
@@ -206,7 +206,7 @@ post.upload = (req: express.Request, res: express.Response) => {
   form.on("aborted", () => {
     // Remove temporary files that were in the process of uploading
     for (const incomingFile of incomingFiles) {
-      fs.unlink(incomingFile.path, () => undefined);
+      fs.unlink(incomingFile.filepath, () => undefined);
     }
   });
 };
@@ -218,7 +218,7 @@ post.clearfile = (req: express.Request, res: express.Response) => {
   form.parse(req, (err, fields) => {
     const client = req.app.get("clients")[fields.id];
     if (client && client.file) {
-      fs.unlink(client.file.path, () => undefined);
+      fs.unlink(client.file.filepath, () => undefined);
       client.file = null;
     }
     res.send("Cleared");

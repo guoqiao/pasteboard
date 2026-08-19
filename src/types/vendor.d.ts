@@ -1,7 +1,7 @@
 /**
- * Ambient type declarations for the vintage 2012-era dependencies this
- * project depends on. Most of these packages predate @types entirely,
- * so we declare just enough surface area for the code to type-check.
+ * Ambient type declarations for the dependencies this project depends on.
+ * These packages either predate @types or expose more surface area than the
+ * code uses, so we declare just enough for the code to type-check.
  */
 
 declare module "express" {
@@ -19,21 +19,23 @@ declare module "express" {
     }
 
     interface Response {
-      send(body?: any, status?: number): void;
+      send(body?: any): void;
       json(body: any): void;
       render(view: string, data?: any): void;
       set(field: string, value: string): void;
+      setHeader(field: string, value: string | string[]): this;
+      status(code: number): Response;
       cookie(name: string, value: any, options?: any): void;
       clearCookie(name: string): void;
       redirect(url: string): void;
       getHeaders(): any;
+      headersSent: boolean;
+      statusCode: number;
     }
 
     interface Application {
-      configure(...args: any[]): void;
       use(...args: any[]): void;
       set(name: string, value: any): this;
-      set(name: string, value: any, ...args: any[]): this;
       get(name: string): any;
       get(path: string, handler: (req: Request, res: Response) => void): this;
       post(path: string, handler: (req: Request, res: Response) => void): this;
@@ -41,16 +43,9 @@ declare module "express" {
       del(path: string, handler: (req: Request, res: Response) => void): this;
       listen(port: number, callback?: () => void): http.Server;
       settings: any;
-      router: any;
     }
 
-    function favicon(path: string): any;
-    function limit(bytes: string): any;
-    function logger(format: string): any;
-    function cookieParser(): any;
-    function methodOverride(): any;
     function static(path: string): any;
-    function errorHandler(): any;
   }
 
   function express(): express.Application;
@@ -58,39 +53,36 @@ declare module "express" {
   export = express;
 }
 
-declare module "request" {
-  namespace request {
-    interface Options {
-      url?: string;
-      uri?: string;
-      method?: string;
-      headers?: any;
-      body?: any;
-      qs?: any;
-      json?: boolean;
-    }
+declare module "serve-favicon" {
+  function serveFavicon(path: string): any;
+  export = serveFavicon;
+}
 
-    interface Request {
-      pipe(destination: any): any;
-    }
+declare module "morgan" {
+  function morgan(format: string): any;
+  export = morgan;
+}
 
-    type Callback = (error: any, response: any, body: any) => void;
-  }
+declare module "cookie-parser" {
+  function cookieParser(): any;
+  export = cookieParser;
+}
 
-  function request(options: request.Options | string, callback?: request.Callback): request.Request;
+declare module "method-override" {
+  function methodOverride(): any;
+  export = methodOverride;
+}
 
-  namespace request {
-    function del(options: request.Options, callback?: (error: any) => void): void;
-  }
-
-  export = request;
+declare module "errorhandler" {
+  function errorHandler(): any;
+  export = errorHandler;
 }
 
 declare module "formidable" {
   interface File {
-    path: string;
+    filepath: string;
     size: number;
-    type: string;
+    mimetype: string;
   }
 
   interface Fields {
@@ -171,18 +163,13 @@ declare module "ua-parser" {
   export = uaParser;
 }
 
-declare module "fs.extra" {
-  import fs = require("fs");
-
-  function move(
+declare module "fs-extra" {
+  export function move(
     sourcePath: string,
     destinationPath: string,
     callback: (err?: Error) => void
   ): void;
-  function unlink(path: string, callback?: (err?: Error) => void): void;
-
-  export = fs;
-  export { move };
+  export function unlink(path: string, callback?: (err?: Error) => void): void;
 }
 
 declare module "websocket" {
@@ -213,15 +200,6 @@ declare module "websocket" {
   }
 
   export = websocket;
-}
-
-declare module "underscore" {
-  interface UnderscoreStatic {
-    defer(callback: (...args: any[]) => void, ...args: any[]): void;
-  }
-
-  const _: UnderscoreStatic;
-  export = _;
 }
 
 declare module "less" {

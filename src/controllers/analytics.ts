@@ -8,7 +8,7 @@ const get: any = {};
 
 get.views = (req: express.Request, res: express.Response) => {
   analytics.getTotalViews(`/${req.params.path}`, (err, views) => {
-    if (err) return res.send(err, 500);
+    if (err) return res.status(500).send(String(err));
     res.send({ views });
   });
 };

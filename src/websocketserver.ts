@@ -44,7 +44,7 @@ export function init(expressApp: express.Application, webServer: http.Server): v
         const client = clients[ID];
         if (client && client.file) {
           // Delete the leftover file
-          fs.unlink(client.file.path, () => undefined);
+          fs.unlink(client.file.filepath, () => undefined);
         }
         delete clients[ID];
       });

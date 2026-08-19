@@ -3,9 +3,9 @@
  */
 import * as fs from "fs";
 import express = require("express");
-import request = require("request");
 import auth = require("../auth");
 import helpers = require("../helpers/common");
+import { jsonFetch, pipeRemote } from "../helpers/http";
 
 const get: any = {};
 const post: any = {};
@@ -35,15 +35,10 @@ export const index = get.index = (req: express.Request, res: express.Response) =
 
 // Image download URL
 get.download = (req: express.Request, res: express.Response) => {
-  const imageRequest = request({
-    url: helpers.imageURL(req, req.params.image),
-    headers: {
-      Referer: req.headers.referer,
-    },
-  });
-
   res.set("Content-Disposition", `attachment; filename=${req.params.image}`);
-  imageRequest.pipe(res);
+  pipeRemote(helpers.imageURL(req, req.params.image), res, {
+    Referer: req.headers.referer,
+  });
 };
 
 // Delete the image
@@ -58,20 +53,20 @@ post.delete = (req: express.Request, res: express.Response) => {
     }
 
     if (auth.cloudflare) {
-      const params: request.Options = {
-        url: `https://api.cloudflare.com/client/v4/zones/${auth.cloudflare.ZONE_ID}/purge_cache`,
-        json: true,
-        headers: {
-          "X-Auth-Email": auth.cloudflare.EMAIL,
-          "X-Auth-Key": auth.cloudflare.KEY,
-        },
-        body: {
-          files: [helpers.imageURL(req, req.params.image)],
-        },
-      };
-
-      request.del(params, (error) => {
-        if (error) console.log("Cloudflare error", error);
+      jsonFetch(
+        `https://api.cloudflare.com/client/v4/zones/${auth.cloudflare.ZONE_ID}/purge_cache`,
+        {
+          method: "DELETE",
+          headers: {
+            "X-Auth-Email": auth.cloudflare.EMAIL,
+            "X-Auth-Key": auth.cloudflare.KEY,
+          },
+          body: {
+            files: [helpers.imageURL(req, req.params.image)],
+          },
+        }
+      ).catch((error) => {
+        console.log("Cloudflare error", error);
       });
     }
 
@@ -79,7 +74,7 @@ post.delete = (req: express.Request, res: express.Response) => {
     res.send("Success");
   }
 
-  res.send("Forbidden", 403);
+  res.status(403).send("Forbidden");
 };
 
 export const routes = {
