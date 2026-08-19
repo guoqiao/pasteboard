@@ -31,6 +31,15 @@ sudo apt-get install imagemagick
 __Step 3 (Optional):__ Edit the example files in the _/auth_ folder with your credentials and rename them according to
 the instructions inside the files. You can still run the app without doing this, but certain functions will be missing.
 
+### Configuration
+
+The following environment variables are supported:
+
+- `PORT` — HTTP port (default `3000`, `4000` in development).
+- `DOMAIN` — canonical host used for image/share page URLs, e.g. `https://pb.guoqiao.me`.
+- `IMAGE_BASE_URL` — base URL the raw uploaded images are served from, e.g. `https://image.guoqiao.me/`.
+  When unset, image URLs are derived from the incoming request (https when served behind a TLS proxy).
+
 ## Running with Docker on ARM64
 
 The ARM64 image includes ImageMagick and persists local uploads in `public/storage`.

@@ -47,13 +47,38 @@ export function isImageOwner(req: express.Request, image: string): boolean {
   return false;
 }
 
+// The protocol the request arrived over, honoring the scheme set by a
+// reverse proxy (e.g. k3s ingress terminating TLS).
+export function requestProtocol(req: express.Request): string {
+  const forwarded = req.headers["x-forwarded-proto"];
+  if (typeof forwarded === "string" && forwarded.length) {
+    return forwarded.split(",")[0].trim();
+  }
+  return (req.connection as any).encrypted ? "https" : "http";
+}
+
+// The base URL the raw image files are served from. Override with the
+// IMAGE_BASE_URL environment variable, e.g. "https://image.guoqiao.me/".
+// Defaults to the host the request came in on (https when behind TLS).
+function imageBaseURL(req: express.Request): string {
+  const configured = process.env.IMAGE_BASE_URL;
+  if (configured) return configured.replace(/\/+$/, "");
+  return `${requestProtocol(req)}://${req.headers.host}`;
+}
+
 export function imageURL(req: express.Request, image: string): string {
   if (auth.amazon) {
     const base = auth.amazon.CDN_URL || `http://${auth.amazon.S3_BUCKET}.s3.amazonaws.com`;
     return `${base}${req.app.get("amazonFilePath")}${image}`;
-  } else {
-    return `http://${req.headers.host}${req.app.get("localStorageURL")}${image}`;
   }
+
+  // When IMAGE_BASE_URL is set it replaces the whole origin/path prefix,
+  // so the file is expected directly under it (no /storage segment).
+  if (process.env.IMAGE_BASE_URL) {
+    return `${imageBaseURL(req)}/${image}`;
+  }
+
+  return `${imageBaseURL(req)}${req.app.get("localStorageURL")}${image}`;
 }
 
 // Generate the image owner key

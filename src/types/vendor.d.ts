@@ -15,6 +15,7 @@ declare module "express" {
       cookies: any;
       headers: any;
       app: Application;
+      connection: any;
     }
 
     interface Response {

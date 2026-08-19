@@ -34,7 +34,8 @@ export function init(app: express.Application, expressModule: typeof express): v
     // Set
     app.set("localrun", process.env.LOCAL || false);
     app.set("port", process.env.PORT || 3000);
-    app.set("domain", "http://pasteboard.co");
+    // Canonical host for share/image-page URLs, e.g. "https://pb.guoqiao.me".
+    app.set("domain", process.env.DOMAIN || "http://pasteboard.co");
 
     // Amazon S3 connection settings (using knox)
     if (auth.amazon) {
@@ -67,6 +68,6 @@ export function init(app: express.Application, expressModule: typeof express): v
 
     // Set
     app.set("port", process.env.PORT || 4000);
-    app.set("domain", "http://dev.pasteboard.co");
+    app.set("domain", process.env.DOMAIN || "http://dev.pasteboard.co");
   });
 }

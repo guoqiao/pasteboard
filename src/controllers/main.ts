@@ -131,7 +131,9 @@ post.upload = (req: express.Request, res: express.Response) => {
     }
 
     const fileName = helpers.generateFileName(file.type.replace("image/", ""));
-    const domain = req.app.get("localrun") ? req.headers.host : req.app.get("domain");
+    const domain = req.app.get("localrun")
+      ? `${helpers.requestProtocol(req)}://${req.headers.host}`
+      : req.app.get("domain");
     const longURL = `${domain}/${fileName}`;
     let sourcePath = file.path;
 
