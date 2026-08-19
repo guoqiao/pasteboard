@@ -8,11 +8,13 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends imagemagick ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package.json ./
-RUN npm install --production --unsafe-perm=true \
-    && npm cache clean --force
-
+COPY package.json package-lock.json ./
 COPY . ./
+
+RUN npm install --unsafe-perm=true --include=dev \
+    && npm run build \
+    && npm prune --production \
+    && npm cache clean --force
 
 RUN mkdir -p /app/public/storage \
     && chown -R node:node /app

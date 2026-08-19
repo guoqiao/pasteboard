@@ -1,9 +1,11 @@
 node_modules/
 .git/
+dist/
+builtAssets/
+public/builtAssets/
 
 # Authentication files may contain local credentials.
 auth/*.js
-!auth/index.js
 
 public/storage/*
 !public/storage/.gitinclude

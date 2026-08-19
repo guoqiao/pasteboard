@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "none",
+    "lib": ["es5", "dom"],
+    "outDir": "builtAssets/js",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "removeComments": false,
+    "types": []
+  },
+  "include": ["assets/js/**/*.ts", "assets/js/**/*.d.ts"],
+  "exclude": ["node_modules", "builtAssets"]
+}
